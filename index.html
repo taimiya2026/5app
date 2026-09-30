@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>車で学ぼう！1から5のすうじ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Zen Maru Gothic -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* アニメーション定義 */
+        @keyframes popElastic {
+            0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
+            50% { transform: scale(1.08) rotate(2deg); opacity: 1; }
+            70% { transform: scale(0.96) rotate(-1deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+
+        @keyframes badgePop {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            70% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+        }
+
+        .animate-pop {
+            animation: popElastic 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .animate-float {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+
+        .animate-badge {
+            animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 3Dボタン風のシャドウ */
+        .btn-3d {
+            transition: all 0.15s ease;
+            box-shadow: 0 8px 0 var(--btn-shadow-color), 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-3d:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 var(--btn-shadow-color), 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-3d-selected {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 var(--btn-shadow-color), 0 0 20px rgba(253, 224, 71, 0.8);
+        }
+
+        /* 背景の雲アニメーション */
+        .cloud-bg {
+            position: absolute;
+            background: white;
+            border-radius: 9999px;
+            opacity: 0.6;
+            animation: moveCloud linear infinite;
+            filter: blur(1px);
+        }
+
+        @keyframes moveCloud {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(-300px); }
+        }
+
+        /* ガラスモーフィズム */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 3px solid rgba(255, 255, 255, 0.95);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-sky-100 to-amber-100 min-h-screen flex flex-col justify-between overflow-x-hidden select-none relative">
+
+    <!-- 背景アニメーション（雲＆太陽） -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="cloud-bg w-40 h-14 top-8" style="animation-duration: 35s; opacity: 0.5;"></div>
+        <div class="cloud-bg w-60 h-20 top-20" style="animation-duration: 48s; animation-delay: -15s; opacity: 0.6;"></div>
+        <div class="cloud-bg w-48 h-16 top-36" style="animation-duration: 40s; animation-delay: -28s; opacity: 0.4;"></div>
+        <!-- おひさま -->
+        <div class="absolute top-4 right-4 text-amber-400 text-5xl md:text-7xl animate-pulse opacity-90">
+            <i class="fa-solid fa-sun"></i>
+        </div>
+    </div>
+
+    <!-- ヘッダー -->
+    <header class="relative z-10 pt-4 px-4 text-center">
+        <div class="glass-panel inline-flex items-center gap-3 px-6 py-2.5 md:py-3.5 rounded-full shadow-lg border-2 border-white/80">
+            <span class="text-2xl md:text-3xl text-red-500 animate-bounce"><i class="fa-solid fa-car-side"></i></span>
+            <h1 class="text-xl md:text-3xl font-black text-slate-800 tracking-wide">
+                ほんもののくるまで すうじをまなぼう！
+            </h1>
+            <span class="text-2xl md:text-3xl text-blue-500 animate-bounce" style="animation-delay: 0.2s;"><i class="fa-solid fa-truck-monster"></i></span>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ領域 -->
+    <main class="relative z-10 flex-grow flex flex-col items-center justify-center px-3 py-2 my-auto">
+        
+        <!-- 大数字＆案内バナー -->
+        <div id="announce-banner" class="mb-4 text-center min-h-[72px] flex items-center justify-center">
+            <div id="number-badge" class="hidden inline-flex items-center justify-center bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 border-4 border-white text-slate-900 font-black text-4xl md:text-6xl rounded-3xl px-8 py-2 shadow-xl animate-pop">
+                <span id="number-display-text" class="text-amber-950 mr-3 text-5xl md:text-7xl">1</span>
+                <span id="word-display-text" class="text-2xl md:text-4xl text-red-600 font-black">（いち）</span>
+            </div>
+            <div id="welcome-message" class="glass-panel px-6 py-3.5 rounded-2xl shadow-md border border-white text-slate-700 font-extrabold text-base md:text-xl flex items-center gap-2 animate-float">
+                <span class="text-2xl">🏎️</span>
+                <span>したの １〜５の すうじボタンを おしてね！</span>
+            </div>
+        </div>
+
+        <!-- リアルな車の写真カードグリッド（名前テキスト削除済みの完全写真表示） -->
+        <div id="cars-container" class="w-full max-w-6xl flex flex-wrap justify-center items-center gap-4 md:gap-6 min-h-[320px] p-2">
+            <!-- JavaScriptでカードがダイナミック生成されます -->
+        </div>
+
+        <!-- お祝い・達成モーダル -->
+        <div id="complete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+            <div class="bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-300 p-6 md:p-8 rounded-3xl border-8 border-white shadow-2xl text-center max-w-md w-full animate-pop">
+                <div class="text-6xl md:text-7xl mb-3 flex justify-center gap-2">
+                    <span>🏁</span><span>🎉</span><span>🏎️</span>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-black text-red-600 mb-2 drop-shadow-sm">ぜんぶ かぞえたね！</h2>
+                <p id="complete-text" class="text-lg md:text-xl font-bold text-slate-800 mb-6 leading-relaxed">
+                    すごーい！かっこいい！
+                </p>
+                <button onclick="closeModal()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-black text-xl md:text-2xl py-4 rounded-2xl shadow-lg border-4 border-white active:scale-95 transition">
+                    もういちど あそぶ！
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 下部：数字選択ボタン -->
+    <footer class="relative z-10 pb-6 pt-2 px-3">
+        <div class="max-w-3xl mx-auto glass-panel rounded-3xl p-3 md:p-4 shadow-xl border-2 border-white">
+            <p class="text-center text-xs md:text-sm font-black text-slate-600 mb-2 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-hand-pointer text-amber-500"></i>
+                すうじボタンを おしてね
+            </p>
+            <div class="grid grid-cols-5 gap-2 md:gap-4">
+                <button onclick="selectNumber(1)" id="btn-1" style="--btn-shadow-color: #b91c1c;" class="btn-3d bg-gradient-to-b from-red-400 to-red-500 text-white font-black py-2.5 md:py-3.5 rounded-2xl border-2 border-red-300 flex flex-col items-center justify-center">
+                    <span class="text-3xl md:text-5xl leading-none">1</span>
+                    <span class="text-xs md:text-sm font-bold opacity-90 mt-0.5">いち</span>
+                </button>
+                <button onclick="selectNumber(2)" id="btn-2" style="--btn-shadow-color: #1d4ed8;" class="btn-3d bg-gradient-to-b from-blue-400 to-blue-500 text-white font-black py-2.5 md:py-3.5 rounded-2xl border-2 border-blue-300 flex flex-col items-center justify-center">
+                    <span class="text-3xl md:text-5xl leading-none">2</span>
+                    <span class="text-xs md:text-sm font-bold opacity-90 mt-0.5">に</span>
+                </button>
+                <button onclick="selectNumber(3)" id="btn-3" style="--btn-shadow-color: #d97706;" class="btn-3d bg-gradient-to-b from-amber-300 to-amber-400 text-slate-900 font-black py-2.5 md:py-3.5 rounded-2xl border-2 border-amber-200 flex flex-col items-center justify-center">
+                    <span class="text-3xl md:text-5xl leading-none">3</span>
+                    <span class="text-xs md:text-sm font-bold opacity-90 mt-0.5">さん</span>
+                </button>
+                <button onclick="selectNumber(4)" id="btn-4" style="--btn-shadow-color: #047857;" class="btn-3d bg-gradient-to-b from-emerald-400 to-emerald-500 text-white font-black py-2.5 md:py-3.5 rounded-2xl border-2 border-emerald-300 flex flex-col items-center justify-center">
+                    <span class="text-3xl md:text-5xl leading-none">4</span>
+                    <span class="text-xs md:text-sm font-bold opacity-90 mt-0.5">よん</span>
+                </button>
+                <button onclick="selectNumber(5)" id="btn-5" style="--btn-shadow-color: #6d28d9;" class="btn-3d bg-gradient-to-b from-purple-400 to-purple-500 text-white font-black py-2.5 md:py-3.5 rounded-2xl border-2 border-purple-300 flex flex-col items-center justify-center">
+                    <span class="text-3xl md:text-5xl leading-none">5</span>
+                    <span class="text-xs md:text-sm font-bold opacity-90 mt-0.5">ご</span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 実写車データリスト (テキストラベル不使用、高品質画像URLのみ)
+        const realCarPhotos = [
+            {
+                id: 1,
+                url: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=800&q=80",
+                fallback: "https://placehold.co/800x600/dc2626/ffffff?text=Car+1",
+                hornFreq: 520
+            },
+            {
+                id: 2,
+                url: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=800&q=80",
+                fallback: "https://placehold.co/800x600/2563eb/ffffff?text=Car+2",
+                hornFreq: 460
+            },
+            {
+                id: 3,
+                url: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80",
+                fallback: "https://placehold.co/800x600/b91c1c/ffffff?text=Car+3",
+                hornFreq: 280
+            },
+            {
+                id: 4,
+                url: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80",
+                fallback: "https://placehold.co/800x600/059669/ffffff?text=Car+4",
+                hornFreq: 340
+            },
+            {
+                id: 5,
+                url: "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80",
+                fallback: "https://placehold.co/800x600/d97706/ffffff?text=Car+5",
+                hornFreq: 220
+            }
+        ];
+
+        const numberReadings = ["", "いち", "に", "さん", "よん", "ご"];
+        const countReadings = ["", "いちだいめ！", "にだいめ！", "さんだいめ！", "よんだいめ！", "ごだいめ！"];
+
+        let currentNumber = 0;
+        let countedCars = new Set();
+        let audioContext = null;
+
+        // Audio Contextの初期化
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        // Web Audio API によるリアルなクラクション音の生成
+        function playCarHorn(freq = 400) {
+            initAudio();
+            if (!audioContext) return;
+
+            try {
+                const osc1 = audioContext.createOscillator();
+                const osc2 = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc1.type = 'sawtooth';
+                osc2.type = 'sawtooth';
+
+                osc1.frequency.setValueAtTime(freq, audioContext.currentTime);
+                osc2.frequency.setValueAtTime(freq * 1.22, audioContext.currentTime);
+
+                gain.gain.setValueAtTime(0.25, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(audioContext.destination);
+
+                osc1.start();
+                osc2.start();
+                osc1.stop(audioContext.currentTime + 0.35);
+                osc2.stop(audioContext.currentTime + 0.35);
+            } catch (e) {
+                console.warn("Audio playback error:", e);
+            }
+        }
+
+        // クリア時のファンファーレ音
+        function playFanfare() {
+            initAudio();
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // ド・ミ・ソ・ド
+            notes.forEach((freq, idx) => {
+                setTimeout(() => {
+                    playCarHorn(freq * 0.85);
+                }, idx * 120);
+            });
+        }
+
+        // 音声読み上げ (Web Speech API)
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.pitch = 1.25;
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 数字選択処理
+        function selectNumber(num) {
+            initAudio();
+            currentNumber = num;
+            countedCars.clear();
+
+            // 数字ボタンのアクティブUI状態の更新
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`btn-${i}`);
+                if (i === num) {
+                    btn.classList.add('btn-3d-selected', 'ring-4', 'ring-yellow-300', 'z-20');
+                } else {
+                    btn.classList.remove('btn-3d-selected', 'ring-4', 'ring-yellow-300', 'z-20');
+                }
+            }
+
+            // バナー表示の更新
+            document.getElementById('welcome-message').classList.add('hidden');
+            const badge = document.getElementById('number-badge');
+            badge.classList.remove('hidden');
+            document.getElementById('number-display-text').innerText = num;
+            document.getElementById('word-display-text').innerText = `（${numberReadings[num]}）`;
+
+            // 発声
+            speak(`${numberReadings[num]}！ ${num}だいの くるま！`);
+
+            // 車カードのレンダリング
+            renderCars(num);
+        }
+
+        // 全カードのダイナミック描画（車名テキストを完全に排除し、写真エリアを100%活用）
+        function renderCars(count) {
+            const container = document.getElementById('cars-container');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= count; i++) {
+                const car = realCarPhotos[(i - 1) % realCarPhotos.length];
+
+                const card = document.createElement('div');
+                card.id = `car-card-${i}`;
+                
+                // カード全体を綺麗な写真枠として構築
+                card.className = `car-card animate-pop cursor-pointer bg-white rounded-3xl overflow-hidden shadow-xl border-4 border-white ring-1 ring-slate-200/50 flex flex-col relative w-64 sm:w-72 md:w-80 h-64 sm:h-72 md:h-80 transform transition-all hover:scale-105 hover:-translate-y-2 hover:shadow-2xl`;
+                card.style.animationDelay = `${(i - 1) * 0.08}s`;
+                card.onclick = () => tapCar(i, car);
+
+                card.innerHTML = `
+                    <!-- カウントバッジ (1だいめ！等) -->
+                    <div id="badge-${i}" class="animate-badge absolute top-3 left-3 bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-900 border-2 border-white font-black text-base md:text-xl px-4 py-1.5 rounded-full shadow-lg z-20 hidden">
+                        ${i}だいめ！
+                    </div>
+
+                    <!-- タップ済みチェックマーク -->
+                    <div id="check-${i}" class="absolute inset-0 bg-emerald-500/25 backdrop-blur-[2px] flex items-center justify-center opacity-0 transition-opacity duration-300 z-10 pointer-events-none">
+                        <i class="fa-solid fa-circle-check text-white text-6xl md:text-8xl drop-shadow-xl animate-pop"></i>
+                    </div>
+
+                    <!-- 車の写真 (テキストエリア無しでカード一杯に表示) -->
+                    <div class="w-full h-full overflow-hidden bg-slate-900 relative">
+                        <img src="${car.url}" alt="くるま ${i}" 
+                             onerror="this.onerror=null; this.src='${car.fallback}';"
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                    </div>
+                `;
+
+                container.appendChild(card);
+            }
+        }
+
+        // 車カードのタップ時インタラクション
+        function tapCar(index, carInfo) {
+            if (countedCars.has(index)) {
+                playCarHorn(carInfo.hornFreq);
+                speak(`${countReadings[index]}`);
+                return;
+            }
+
+            countedCars.add(index);
+            playCarHorn(carInfo.hornFreq);
+
+            const card = document.getElementById(`car-card-${index}`);
+            const badge = document.getElementById(`badge-${index}`);
+            const check = document.getElementById(`check-${index}`);
+
+            // 弾けるアニメーション
+            card.classList.add('scale-105', '-rotate-2');
+            setTimeout(() => card.classList.remove('-rotate-2'), 250);
+
+            // バッジとチェックマークの表示
+            badge.classList.remove('hidden');
+            check.classList.remove('opacity-0');
+            check.classList.add('opacity-100');
+
+            // カウント音声発声
+            speak(`${countReadings[index]}`);
+
+            // すべて数え終わったかチェック
+            if (countedCars.size === currentNumber) {
+                setTimeout(() => {
+                    showCompleteModal();
+                }, 900);
+            }
+        }
+
+        // 全達成モーダルの表示と紙吹雪
+        function showCompleteModal() {
+            playFanfare();
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 120,
+                    spread: 90,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            speak(`すごーい！ ${numberReadings[currentNumber]}だいの くるまを ぜんぶ かぞえたね！`);
+
+            const modal = document.getElementById('complete-modal');
+            document.getElementById('complete-text').innerText = `${currentNumber}だいの くるまを ぜんぶ かぞえられたよ！`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            initAudio();
+            document.getElementById('complete-modal').classList.add('hidden');
+        }
+
+        window.addEventListener('click', () => {
+            initAudio();
+        }, { once: true });
+    </script>
+</body>
+</html>
